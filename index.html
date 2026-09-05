@@ -1,54 +1,113 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>41Score</title>
 <meta name="theme-color" content="#111111">
+
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}
-body{background:#0d0d0d;color:#fff;padding:15px}
+body{background:#0d0d0d;color:white;padding:15px}
 h1{text-align:center;color:#d4af37;margin-bottom:15px}
-.controls{display:flex;gap:10px;justify-content:center;margin-bottom:15px;flex-wrap:wrap}
-button,select,input{
-padding:10px;border:none;border-radius:10px;font-size:16px
+
+.controls{
+display:flex;
+gap:8px;
+flex-wrap:wrap;
+justify-content:center;
+margin-bottom:20px;
 }
-button{background:#d4af37;color:#000;font-weight:bold}
+
+button,select,input{
+border:none;
+border-radius:10px;
+padding:10px;
+font-size:16px;
+}
+
+button{
+background:#d4af37;
+color:black;
+font-weight:bold;
+}
+
 .player{
 background:#1b1b1b;
-padding:12px;
-border-radius:15px;
-margin-bottom:12px;
 border:2px solid #333;
+border-radius:15px;
+padding:12px;
+margin-bottom:12px;
+transition:.2s;
 }
-.player.danger{border-color:red;animation:pulse 1s infinite}
-@keyframes pulse{
-0%{box-shadow:0 0 5px red}
-50%{box-shadow:0 0 20px red}
-100%{box-shadow:0 0 5px red}
+
+.player.danger{
+border-color:#ff3030;
+box-shadow:0 0 12px red;
 }
-.score{font-size:34px;font-weight:bold;color:#d4af37}
-.row{display:flex;gap:8px;align-items:center;margin-top:8px}
-input[type=number]{width:90px;background:#333;color:white}
-.re{background:#444;color:white}
-#ranking{margin-top:20px}
-li{margin:5px 0}
+
+.score{
+font-size:38px;
+font-weight:bold;
+color:#d4af37;
+margin:6px 0;
+}
+
+.row{
+display:flex;
+gap:8px;
+align-items:center;
+}
+
+input[type=number]{
+width:90px;
+background:#333;
+color:white;
+}
+
+input[type=text]{
+width:100%;
+background:transparent;
+color:white;
+font-size:20px;
+font-weight:bold;
+margin-bottom:5px;
+}
+
+.re{
+background:#444;
+color:white;
+}
+
+#ranking{
+margin-top:20px;
+}
+
+li{
+margin:6px 0;
+font-size:18px;
+}
 </style>
 </head>
+
 <body>
 
 <h1>41 SCORE</h1>
 
 <div class="controls">
+
 <select id="numPlayers">
-<option>2</option><option>3</option>
+<option>2</option>
+<option>3</option>
 <option selected>4</option>
-<option>5</option><option>6</option>
+<option>5</option>
+<option>6</option>
 </select>
+
 <button onclick="newGame()">Nueva partida</button>
 <button onclick="undo()">Deshacer</button>
 <button onclick="addRound()">Añadir mano</button>
+
 </div>
 
 <div id="players"></div>
@@ -59,74 +118,180 @@ li{margin:5px 0}
 </div>
 
 <script>
-let history=[];
+
 let players=[];
+let history=[];
 
 function createPlayers(n){
+
 players=[];
+
 for(let i=0;i<n;i++){
-players.push({name:"Jugador "+(i+1),score:0,re:0});
+
+players.push({
+name:"Jugador "+(i+1),
+score:0,
+re:0
+});
+
 }
+
 draw();
+
 }
 
 function draw(){
+
 const div=document.getElementById("players");
+
 div.innerHTML="";
+
 players.forEach((p,i)=>{
+
 div.innerHTML+=`
+
 <div class="player ${p.score>=151?'danger':''}">
-<input value="${p.name}" onchange="players[${i}].name=this.value;draw()">
+
+<input type="text"
+value="${p.name}"
+onchange="players[${i}].name=this.value;draw()">
+
 <div class="score">${p.score}</div>
+
 <div>Reenganches: ${p.re}</div>
+
 <div class="row">
+
 <input id="pts${i}" type="number" value="0">
-${p.score>=151?`<button class="re" onclick="reengage(${i})">🔄 Reenganchar</button>`:""}
+
+${p.score>=151?
+`<button class="re" onclick="reengage(${i})">🔄 Reenganchar</button>`
+:""}
+
 </div>
-</div>`;
+
+</div>
+
+`;
+
 });
+
 updateRanking();
+
 }
 
 function addRound(){
-let round=[];
+
+let ronda=[];
+
 players.forEach((p,i)=>{
+
 let v=parseInt(document.getElementById("pts"+i).value)||0;
-round.push(v);
+
+ronda.push(v);
+
 p.score+=v;
+
 });
-history.push(round);
+
+history.push(ronda);
+
 draw();
+
+players.forEach((p,i)=>{
+
+if(p.score>=151){
+
+setTimeout(()=>{
+
+let otros=players
+.filter((_,index)=>index!==i)
+.map(x=>x.score);
+
+let max=Math.max(...otros);
+
+if(confirm(
+`${p.name} tiene ${p.score} puntos.
+
+¿Quieres reengancharte con ${max} puntos?`
+)){
+
+reengage(i);
+
 }
 
-function undo(){
-if(!history.length)return;
-let last=history.pop();
-players.forEach((p,i)=>p.score-=last[i]);
-draw();
+},100);
+
+}
+
+});
+
 }
 
 function reengage(i){
-let max=Math.max(...players.map(p=>p.score));
+
+let otros=players
+.filter((_,index)=>index!==i)
+.map(x=>x.score);
+
+let max=Math.max(...otros);
+
 players[i].score=max;
+
 players[i].re++;
+
 draw();
+
+}
+
+function undo(){
+
+if(history.length===0)return;
+
+let ultima=history.pop();
+
+players.forEach((p,i)=>{
+
+p.score-=ultima[i];
+
+});
+
+draw();
+
 }
 
 function updateRanking(){
-let rank=[...players].sort((a,b)=>a.score-b.score);
+
+let orden=[...players].sort((a,b)=>a.score-b.score);
+
 let html="";
-rank.forEach(p=>html+=`<li>${p.name}: ${p.score} pts</li>`);
+
+orden.forEach(p=>{
+
+html+=`<li>${p.name}: ${p.score} puntos</li>`;
+
+});
+
 document.getElementById("rankList").innerHTML=html;
+
 }
 
 function newGame(){
+
 history=[];
+
 createPlayers(parseInt(document.getElementById("numPlayers").value));
+
 }
 
-document.getElementById("numPlayers").onchange=e=>createPlayers(parseInt(e.target.value));
+document.getElementById("numPlayers").onchange=e=>{
+
+createPlayers(parseInt(e.target.value));
+
+};
+
 createPlayers(4);
+
 </script>
 
 </body>
